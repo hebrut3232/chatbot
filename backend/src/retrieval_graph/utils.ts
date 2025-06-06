@@ -35,6 +35,7 @@ export function formatCitations(sourceDocs?: Document[]): string {
   const citations = sourceDocs.map(doc => {
     const metadata = doc.metadata as Record<string, any>;
 
+
     // FI    // Sidnummer: försök loc.pageNumber, page eller pageNumber
     const pageNumber =
       metadata.loc?.pageNumber ??
@@ -48,5 +49,7 @@ export function formatCitations(sourceDocs?: Document[]): string {
       (metadata.source ? path.basename(metadata.source as string) : 'okänt_dokument.pdf');
 
     return `(${fileName}, sida ${pageNumber})`;
-  return citations.join(' ');
-}
+  });
+
+    return citations.join(', ');
+  }

@@ -2,7 +2,7 @@ import { StateGraph, START, END } from '@langchain/langgraph';
 import { AgentStateAnnotation } from './state.js';
 import { makeRetriever } from '../shared/retrieval.js';
 import { formatDocs, formatCitations } from './utils.js'; // <-- Uppdaterad import!
-import { HumanMessage } from '@langchain/core/messages';
+import { HumanMessage, AIMessage } from '@langchain/core/messages'; // <-- Uppdaterad här
 import { z } from 'zod';
 import { RESPONSE_SYSTEM_PROMPT, ROUTER_SYSTEM_PROMPT } from './prompts.js';
 import { RunnableConfig } from '@langchain/core/runnables';
@@ -18,7 +18,6 @@ async function checkQueryType(
 ): Promise<{
   route: 'retrieve' | 'direct';
 }> {
-  //schema for routing
   const schema = z.object({
     route: z.enum(['retrieve', 'direct']),
     directAnswer: z.string().optional(),
@@ -115,8 +114,16 @@ async function generateResponse(
     ? `${aiResponse} ${citationString}`
     : aiResponse;
 
-  // Returnera båda messages så frontend får både fråga och svar
-  return { messages: [userHumanMessage, finalResponseText] };
+  // Slå ihop till ett korrekt AIMessage
+  const finalAIMessage = new AIMessage(finalResponseText);
+
+const assistantMessage = {
+  role: "assistant",
+  content: finalResponseText,
+  sources: state.documents,
+};
+
+return { messages: [userHumanMessage, assistantMessage] };
 }
 
 const builder = new StateGraph(

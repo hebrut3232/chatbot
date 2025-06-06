@@ -44,35 +44,55 @@ export function reduceDocs(
         existingIds.add(itemId);
       } else if (typeof item === 'object') {
         const metadata = (item as Document).metadata ?? {};
-        let itemId = metadata.uuid ?? uuidv4();
+        const itemId = metadata.uuid ?? uuidv4();
 
         // Alltid sätt source och page om de finns, annars 'N/A'
         let source =
-  metadata.source && metadata.source.includes('.pdf')
-    ? metadata.source
-    : metadata.originalName ?? (metadata.filePath ? path.basename(metadata.filePath) : metadata.source ?? 'N/A');
+          metadata.source && metadata.source.includes('.pdf')
+            ? metadata.source
+            : metadata.originalName ?? (metadata.filePath ? path.basename(metadata.filePath) : metadata.source ?? 'N/A');
 
-let page =
-  metadata.loc?.pageNumber ??
-  metadata.page ??
-  (item as any).page ??
-  'N/A';
+        let page =
+          metadata.loc?.pageNumber ??
+          metadata.page ??
+          (item as any).page ??
+          'N/A';
 
         if (!existingIds.has(itemId)) {
           if ('pageContent' in item) {
             // It's a Document-like object
-            newList.push({
-              ...(item as Document),
-              metadata: { ...metadata, uuid: itemId, source, page },
-            });
+                        const outMetadata = { ...metadata, source, page } as Record<string, any>;
+            if (metadata.uuid) {
+              outMetadata.uuid = metadata.uuid;
+            }
+newList.push({
+  ...(item as Document),
+  metadata: {
+    ...metadata,
+    uuid: itemId,
+    source,
+    page,                    // behåller ev. befintlig struktur
+    loc: {                   // ny, så frontend hittar sidnumret
+      pageNumber: page,
+    },
+  },
+});
             // --- Logga dokumentet som läggs till ---
             console.log('NEW DOCUMENT CREATED (object):', newList[newList.length - 1]);
           } else {
-            // It's a generic object, treat it as metadata
-            newList.push({
-              pageContent: '',
-              metadata: { ...(item as { [key: string]: any }), uuid: itemId, source, page },
-            });
+// It's a generic object, treat it as metadata
+newList.push({
+  pageContent: '',
+  metadata: {
+    ...(item as { [key: string]: any }),
+    uuid: itemId,
+    source,
+    page,                 // behåller ev. befintlig struktur
+    loc: {                // nytt fält som frontend letar efter
+      pageNumber: page,
+    },
+  },
+});
             // --- Logga dokumentet som läggs till ---
             console.log('NEW DOCUMENT CREATED (generic object):', newList[newList.length - 1]);
           }
