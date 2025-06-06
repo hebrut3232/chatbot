@@ -1,7 +1,7 @@
 import { StateGraph, START, END } from '@langchain/langgraph';
 import { AgentStateAnnotation } from './state.js';
 import { makeRetriever } from '../shared/retrieval.js';
-import { formatDocs } from './utils.js';
+import { formatDocs, formatCitations } from './utils.js'; // <-- Uppdaterad import!
 import { HumanMessage } from '@langchain/core/messages';
 import { z } from 'zod';
 import { RESPONSE_SYSTEM_PROMPT, ROUTER_SYSTEM_PROMPT } from './prompts.js';
@@ -85,6 +85,9 @@ async function generateResponse(
   state: typeof AgentStateAnnotation.State,
   config: RunnableConfig,
 ): Promise<typeof AgentStateAnnotation.Update> {
+  // === LOGGA DOKUMENTEN HÄR ===
+  console.log('STATE.DOCUMENTS I GENERATERESPONSE:', state.documents);
+
   const configuration = ensureAgentConfiguration(config);
   const context = formatDocs(state.documents);
   const model = await loadChatModel(configuration.queryModel);
@@ -97,16 +100,23 @@ async function generateResponse(
 
   const userHumanMessage = new HumanMessage(state.query);
 
-  // Create a human message with the formatted prompt that includes context
+  // Skapa HumanMessage med prompten (för historiken)
   const formattedPromptMessage = new HumanMessage(formattedPrompt.toString());
-
   const messageHistory = [...state.messages, formattedPromptMessage];
 
-  // Let MessagesAnnotation handle the message history
-  const response = await model.invoke(messageHistory);
+  // Hämta AI-svaret som en sträng
+  const aiResponse = await model.invoke(messageHistory);
 
-  // Return both the current query and the AI response to be handled by MessagesAnnotation's reducer
-  return { messages: [userHumanMessage, response] };
+  // Skapa citation-sträng utifrån state.documents
+  const citationString = formatCitations(state.documents);
+
+  // Sätt ihop AI-svar och citationer (om några finns)
+  const finalResponseText = citationString
+    ? `${aiResponse} ${citationString}`
+    : aiResponse;
+
+  // Returnera båda messages så frontend får både fråga och svar
+  return { messages: [userHumanMessage, finalResponseText] };
 }
 
 const builder = new StateGraph(

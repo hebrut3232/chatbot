@@ -38,24 +38,34 @@ export function reduceDocs(
       if (typeof item === 'string') {
         const itemId = uuidv4();
         newList.push({ pageContent: item, metadata: { uuid: itemId } });
+        // --- Logga dokumentet som läggs till ---
+        console.log('NEW DOCUMENT CREATED (string):', newList[newList.length - 1]);
         existingIds.add(itemId);
       } else if (typeof item === 'object') {
         const metadata = (item as Document).metadata ?? {};
         let itemId = metadata.uuid ?? uuidv4();
+
+        // Alltid sätt source och page om de finns, annars 'N/A'
+        let source = metadata.source ?? (item as any).source ?? 'N/A';
+        let page = metadata.page ?? (item as any).page ?? 'N/A';
 
         if (!existingIds.has(itemId)) {
           if ('pageContent' in item) {
             // It's a Document-like object
             newList.push({
               ...(item as Document),
-              metadata: { ...metadata, uuid: itemId },
+              metadata: { ...metadata, uuid: itemId, source, page },
             });
+            // --- Logga dokumentet som läggs till ---
+            console.log('NEW DOCUMENT CREATED (object):', newList[newList.length - 1]);
           } else {
             // It's a generic object, treat it as metadata
             newList.push({
               pageContent: '',
-              metadata: { ...(item as { [key: string]: any }), uuid: itemId },
+              metadata: { ...(item as { [key: string]: any }), uuid: itemId, source, page },
             });
+            // --- Logga dokumentet som läggs till ---
+            console.log('NEW DOCUMENT CREATED (generic object):', newList[newList.length - 1]);
           }
           existingIds.add(itemId);
         }
