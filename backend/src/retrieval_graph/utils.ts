@@ -35,13 +35,18 @@ export function formatCitations(sourceDocs?: Document[]): string {
   const citations = sourceDocs.map(doc => {
     const metadata = doc.metadata as Record<string, any>;
 
-    // FIX: Hämta pageNumber från metadata.loc.pageNumber
-    const pageNumber = metadata.loc?.pageNumber ?? 'N/A';
-    const fullPath = metadata.source as string;
-    const fileName = path.basename(fullPath);
+    // FI    // Sidnummer: försök loc.pageNumber, page eller pageNumber
+    const pageNumber =
+      metadata.loc?.pageNumber ??
+      metadata.page ??
+      metadata.pageNumber ??
+      'N/A';
+
+    // Filnamn: originalName om den finns, annars basename av source
+    const fileName =
+      metadata.originalName ??
+      (metadata.source ? path.basename(metadata.source as string) : 'okänt_dokument.pdf');
 
     return `(${fileName}, sida ${pageNumber})`;
-  });
-
   return citations.join(' ');
 }
