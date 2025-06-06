@@ -1,5 +1,6 @@
 import { Document } from '@langchain/core/documents';
 import { v4 as uuidv4 } from 'uuid';
+import path from 'path';
 
 /**
  * Reduces the document array based on the provided new documents or actions.
@@ -46,8 +47,16 @@ export function reduceDocs(
         let itemId = metadata.uuid ?? uuidv4();
 
         // Alltid sätt source och page om de finns, annars 'N/A'
-        let source = metadata.source ?? (item as any).source ?? 'N/A';
-        let page = metadata.page ?? (item as any).page ?? 'N/A';
+        let source =
+  metadata.source && metadata.source.includes('.pdf')
+    ? metadata.source
+    : metadata.originalName ?? (metadata.filePath ? path.basename(metadata.filePath) : metadata.source ?? 'N/A');
+
+let page =
+  metadata.loc?.pageNumber ??
+  metadata.page ??
+  (item as any).page ??
+  'N/A';
 
         if (!existingIds.has(itemId)) {
           if ('pageContent' in item) {
