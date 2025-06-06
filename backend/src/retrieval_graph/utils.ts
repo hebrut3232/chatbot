@@ -44,10 +44,10 @@ export function formatCitations(sourceDocs?: Document[]): string {
       'N/A';
 
     // Filnamn: originalName om den finns, annars basename av source
-    const fileName =
+    coconst fileName =
       metadata.originalName ??
-      (metadata.source ? path.basename(metadata.source as string) : 'okänt_dokument.pdf');
-
+      metadata.filename ??
+      (metadata.source ? path(metadata.source ? path.basename(metadata.source as string) : 'okänt_dokument.pdf');
     return `(${fileName}, sida ${pageNumber})`;
   });
 
