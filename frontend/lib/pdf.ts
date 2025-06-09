@@ -21,8 +21,9 @@ export async function processPDF(file: File): Promise<Document[]> {
 
     // Add filename to metadata for each document
     docs.forEach((doc) => {
-      doc.metadata.filename = file.name;
-    });
+  doc.metadata.originalName = file.name;
+  doc.metadata.source = file.name;
+});
 
     return docs;
   } finally {
